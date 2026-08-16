@@ -1,0 +1,22 @@
+flowchart TD
+    android[Android app]
+    ios[iOS app]
+    web[Web app]
+
+    orchestrator[Orchestrator API<br/>TypeScript<br/>workflow ledger]
+    stellar[Stellar settlement service<br/>TypeScript<br/>transaction submission and monitoring]
+    core[Core backend<br/>Java<br/>billers, banks, compliance]
+    rails[External settlement rails<br/>alfredpay, MoneyGram, billers, banks]
+    network[Stellar network<br/>USDC]
+
+    android --> orchestrator
+    ios --> orchestrator
+    web --> orchestrator
+    orchestrator --> stellar
+    orchestrator --> core
+    stellar --> network
+    network --> stellar
+    core --> rails
+    rails --> core
+    stellar --> orchestrator
+    core --> orchestrator
