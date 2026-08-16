@@ -2,7 +2,7 @@
 
 Saldo is integrating Stellar USDC into an existing U.S.-Mexico bill payment product. The system lets users fund a non-custodial USDC wallet, pay Mexican billers, settle into MXN through local rails, and reconcile each off-chain payment with its corresponding Stellar transaction.
 
-This repository documents the target architecture for the SCF #45 Build Award work.
+This repository documents the target architecture
 
 ![Saldo architecture](diagrams/architecture.png)
 
@@ -125,9 +125,9 @@ This gives support, reconciliation, and compliance teams one canonical place to 
 6. The Core Backend returns partner references and settlement status.
 7. The Orchestrator updates the ledger and exposes the final status in the app and operations dashboard.
 
-## Integration Track Building Blocks
+## Integration Building Blocks
 
-The SCF Integration Track work focuses on:
+
 
 - alfredpay for USDC-to-MXN settlement, SPEI transfers, and local banking rails.
 - MoneyGram for cash-in/cash-out through physical locations, subject to partner approval.
