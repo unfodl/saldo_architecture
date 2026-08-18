@@ -2,7 +2,7 @@
 
 Saldo is integrating Stellar USDC into an existing U.S.-Mexico bill payment product. The system lets users fund a non-custodial USDC wallet, pay Mexican billers, settle into MXN through local rails, and reconcile each off-chain payment with its corresponding Stellar transaction.
 
-This repository documents the target architecture
+This repository documents the target architecture.
 
 ![Original Saldo architecture concept](diagrams/architecture.png)
 
@@ -45,6 +45,19 @@ flowchart TD
 ```
 
 Blue boxes in the product diagram represent Saldo-owned systems. Gray boxes represent external partners and payment rails.
+
+## Repository Map
+
+Saldo is split across public architecture/demo repositories and private production repositories:
+
+| Repository | Visibility | Role |
+| --- | --- | --- |
+| [saldo_architecture](https://github.com/unfodl/saldo_architecture) | Public | Architecture diagrams, roadmap, integration notes, and technical documentation. |
+| [saldo_web](https://github.com/unfodl/saldo_web) | Public | Web app demo and agent/operations interface prototype. |
+| [saldo](https://github.com/unfodl/saldo) | Private | Java core backend for billers, banks, compliance, and settlement rail integrations. |
+| [saldowallet_android](https://github.com/unfodl/saldowallet_android) | Private | Native Android non-custodial Saldo wallet in Kotlin. |
+| [saldo-stellar](https://github.com/unfodl/saldo-stellar) | Private | TypeScript Stellar wallet and settlement service. |
+| [saldo-stellar-ios](https://github.com/unfodl/saldo-stellar-ios) | Private | iOS wallet application and Stellar client implementation. |
 
 ## Core Components
 
@@ -133,8 +146,6 @@ This gives support, reconciliation, and compliance teams one canonical place to 
 
 ## Integration Building Blocks
 
-
-
 - alfredpay for USDC-to-MXN settlement, SPEI transfers, and local banking rails.
 - MoneyGram for cash-in/cash-out through physical locations, subject to partner approval.
 - Stellar Wallets Kit for browser-based wallet connection and signing in the agent web interface.
@@ -148,5 +159,6 @@ The consumer mobile app may use an embedded MPC wallet provider, but that provid
 - `docs/components.md`: component responsibilities and system boundaries.
 - `docs/flows.md`: main transaction flows.
 - `docs/integrations.md`: Stellar and partner integration scope.
+- `docs/repositories.md`: repository map and ownership boundaries.
 - `diagrams/system-architecture.mmd`: Mermaid source for the system diagram.
 - `diagrams/architecture.png`: original visual architecture concept.
