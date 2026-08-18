@@ -14,11 +14,14 @@ flowchart TD
     stellar[Stellar settlement service<br/>TypeScript<br/>transaction submission and monitoring]
     core[Core backend<br/>Java<br/>billers, banks, compliance]
     rails[Settlement rails<br/>alfredpay, MoneyGram, billers, banks]
+    cctp[Circle CCTP<br/>web-only cross-chain USDC receive]
     network[Stellar network<br/>USDC]
 
     android --> orchestrator
     ios --> orchestrator
     web --> orchestrator
+    web --> cctp
+    cctp --> orchestrator
     orchestrator --> stellar
     orchestrator --> core
     stellar --> network
@@ -35,11 +38,13 @@ The mobile apps expose the consumer wallet and bill payment experience. Users ca
 
 The web application supports operations and agent-facing workflows. For agent or operator signing in the browser, the web app can use Stellar Wallets Kit to connect Stellar-compatible wallets and route signatures through a standard Stellar wallet connection layer.
 
+The web application also supports a web-only cross-chain receive flow through Circle CCTP. This allows a connected web wallet to receive USDC from supported external chains into Stellar USDC. This flow is intentionally scoped to the web experience and does not change the embedded MPC wallet model used in the consumer mobile apps.
+
 ## Orchestrator API
 
 The Orchestrator is the primary API for all apps. It acts as Saldo's transaction ledger and workflow coordinator. It stores the canonical state for wallet creation, bill payments, SPEI transfers, cash-in/cash-out requests, partner references, settlement status, and reconciliation data.
 
-The Orchestrator records both on-chain and off-chain references. A single Saldo transaction can include a Stellar transaction hash, alfredpay reference, SPEI reference, biller payment ID, MoneyGram reference, and compliance status.
+The Orchestrator records both on-chain and off-chain references. A single Saldo transaction can include a Stellar transaction hash, CCTP transfer reference, alfredpay reference, SPEI reference, biller payment ID, MoneyGram reference, and compliance status.
 
 ## Stellar Settlement Service
 

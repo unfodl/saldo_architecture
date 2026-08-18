@@ -49,3 +49,15 @@
 4. Web app requests signature through Stellar Wallets Kit.
 5. Signed payload is submitted to the Orchestrator.
 6. Orchestrator routes Stellar operations to the Stellar settlement service and operational updates to the Java Core Backend.
+
+## Web Wallet Cross-Chain USDC Receive With Circle CCTP
+
+1. User opens the web wallet interface.
+2. Web app connects a Stellar-compatible wallet through Stellar Wallets Kit.
+3. User selects an inbound USDC transfer from a supported external chain.
+4. Web app starts the Circle CCTP flow and captures the transfer reference.
+5. Orchestrator creates an internal deposit record for the inbound web wallet funding flow.
+6. Stellar settlement service monitors the resulting Stellar USDC receipt.
+7. Orchestrator links the CCTP reference, Stellar transaction hash, wallet address, and final deposit status.
+
+This flow is limited to the web wallet interface. Consumer mobile wallets continue to use the embedded MPC wallet provider and do not expose CCTP receive in the initial architecture.

@@ -32,6 +32,7 @@ Responsibilities:
 - Support operational review and reconciliation.
 - Support agent workflows for cash position, limits, repayment status, and risk alerts.
 - Use Stellar Wallets Kit for browser wallet connection/signing where agent signing is required.
+- Support web-only inbound USDC funding from other chains through Circle CCTP.
 
 ## Orchestrator API
 
@@ -42,6 +43,7 @@ Responsibilities:
 - Maintain the canonical transaction ledger.
 - Coordinate wallet, bill payment, SPEI, and cash-in/cash-out workflows.
 - Store Stellar transaction hashes and partner transaction references.
+- Track Circle CCTP transfer references for web wallet deposits.
 - Normalize transaction states across systems.
 - Expose transaction history and status to apps.
 

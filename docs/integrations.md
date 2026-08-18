@@ -2,7 +2,7 @@
 
 ## SCF Integration Track Building Blocks
 
-Saldo's Integration Track work focuses on three Stellar ecosystem building blocks.
+Saldo's Integration Track work focuses on four Stellar ecosystem building blocks.
 
 ## alfredpay
 
@@ -39,6 +39,19 @@ Integration scope:
 - Pass signed payloads to backend services for execution and reconciliation.
 
 Stellar Wallets Kit is not used as the main consumer mobile wallet. Consumer mobile wallets use an embedded non-custodial MPC provider.
+
+## Circle CCTP
+
+Circle CCTP is used for web-only inbound USDC funding from supported external chains into Stellar USDC.
+
+Integration scope:
+
+- Add cross-chain USDC receive flow to the web wallet interface.
+- Capture CCTP transfer references.
+- Monitor resulting Stellar USDC receipt.
+- Link CCTP reference, Stellar transaction hash, wallet address, and deposit status in the Orchestrator ledger.
+
+Circle CCTP is not part of the initial consumer mobile wallet flow. Mobile wallets continue to use the embedded MPC provider and Stellar USDC account model.
 
 ## MPC Wallet Provider
 

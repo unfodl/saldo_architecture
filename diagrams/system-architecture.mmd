@@ -7,11 +7,14 @@ flowchart TD
     stellar[Stellar settlement service<br/>TypeScript<br/>transaction submission and monitoring]
     core[Core backend<br/>Java<br/>billers, banks, compliance]
     rails[External settlement rails<br/>alfredpay, MoneyGram, billers, banks]
+    cctp[Circle CCTP<br/>web-only cross-chain USDC receive]
     network[Stellar network<br/>USDC]
 
     android --> orchestrator
     ios --> orchestrator
     web --> orchestrator
+    web --> cctp
+    cctp --> orchestrator
     orchestrator --> stellar
     orchestrator --> core
     stellar --> network

@@ -4,7 +4,9 @@ Saldo is integrating Stellar USDC into an existing U.S.-Mexico bill payment prod
 
 This repository documents the target architecture
 
-![Saldo architecture](diagrams/architecture.png)
+![Original Saldo architecture concept](diagrams/architecture.png)
+
+The Mermaid diagram below is the current target architecture, including the Circle CCTP web wallet receive flow.
 
 ## System Overview
 
@@ -20,6 +22,7 @@ flowchart TD
     stellar[Stellar settlement service<br/>TypeScript]
     core[Core backend<br/>Java]
     rails[External settlement rails<br/>Billers, alfredpay, MoneyGram, banks]
+    cctp[Circle CCTP<br/>cross-chain USDC funding]
     stellarNet[Stellar network<br/>USDC transactions]
 
     android --> orchestrator
@@ -28,6 +31,8 @@ flowchart TD
 
     orchestrator --> stellar
     orchestrator --> core
+    web --> cctp
+    cctp --> orchestrator
 
     stellar --> stellarNet
     stellarNet --> stellar
@@ -53,7 +58,7 @@ Saldo exposes the same payment and wallet capabilities across three application 
 
 The mobile apps use an embedded non-custodial MPC wallet provider for consumer wallet provisioning. The provider is implementation infrastructure; the Stellar-specific work is account creation, USDC trustline management, transaction tracking, and reconciliation.
 
-The agent web interface can use Stellar Wallets Kit for wallet connection and signing flows where an agent or operator needs to connect a Stellar-compatible wallet from a browser.
+The agent web interface can use Stellar Wallets Kit for wallet connection and signing flows where an agent or operator needs to connect a Stellar-compatible wallet from a browser. The web interface can also support inbound USDC funding from other chains through Circle CCTP. This cross-chain receive flow is scoped to the web wallet experience and is not part of the consumer mobile wallet flow.
 
 ### Orchestrator API
 
@@ -65,6 +70,7 @@ Its responsibilities are:
 - Coordinate wallet operations, bill payments, SPEI transfers, and cash-in/cash-out requests.
 - Maintain the internal ledger state for each transaction.
 - Store references to Stellar transaction hashes and partner transaction IDs.
+- Track inbound CCTP deposits initiated from the web interface.
 - Normalize statuses from Stellar, billers, alfredpay, MoneyGram, and bank/payment providers.
 - Expose transaction history and payment status to the client applications.
 
@@ -132,6 +138,7 @@ This gives support, reconciliation, and compliance teams one canonical place to 
 - alfredpay for USDC-to-MXN settlement, SPEI transfers, and local banking rails.
 - MoneyGram for cash-in/cash-out through physical locations, subject to partner approval.
 - Stellar Wallets Kit for browser-based wallet connection and signing in the agent web interface.
+- Circle CCTP for web-only inbound USDC funding from other chains into Stellar USDC.
 
 The consumer mobile app may use an embedded MPC wallet provider, but that provider is not the primary SCF Integration Track building block.
 
@@ -142,4 +149,4 @@ The consumer mobile app may use an embedded MPC wallet provider, but that provid
 - `docs/flows.md`: main transaction flows.
 - `docs/integrations.md`: Stellar and partner integration scope.
 - `diagrams/system-architecture.mmd`: Mermaid source for the system diagram.
-- `diagrams/architecture.png`: visual architecture diagram.
+- `diagrams/architecture.png`: original visual architecture concept.
