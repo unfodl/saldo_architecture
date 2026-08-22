@@ -2,7 +2,7 @@
 
 ## SCF Integration Track Building Blocks
 
-Saldo's Integration Track work focuses on four Stellar ecosystem building blocks.
+Saldo's Integration Track work focuses on production building blocks plus one staging/testnet-only DeFindex integration.
 
 ## alfredpay
 
@@ -51,7 +51,25 @@ Integration scope:
 - Monitor resulting Stellar USDC receipt.
 - Link CCTP reference, Stellar transaction hash, wallet address, and deposit status in the Orchestrator ledger.
 
-Circle CCTP is not part of the initial consumer mobile wallet flow. Mobile wallets continue to use the embedded MPC provider and Stellar USDC account model.
+Circle CCTP is part of the production web app plan. It is not part of the initial consumer mobile wallet flow. Mobile wallets continue to use the embedded MPC provider and Stellar USDC account model.
+
+## DeFindex
+
+DeFindex is used only for staging/testnet exploration from the web app.
+
+Integration scope:
+
+- Add testnet vault deposit, withdraw, and balance flows to the web app.
+- Connect testnet signing through Stellar Wallets Kit.
+- Track DeFindex vault references and related Stellar testnet transaction hashes.
+- Validate dashboard and reconciliation patterns for vault-style activity.
+
+Production boundary:
+
+- DeFindex is not part of the production launch scope.
+- No production user funds are routed to DeFindex.
+- DeFindex is not exposed in the consumer mobile wallet flow.
+- DeFindex activity is tracked separately from production bill pay, SPEI, cash-in/cash-out, and CCTP activity.
 
 ## MPC Wallet Provider
 

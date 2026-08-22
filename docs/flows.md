@@ -61,3 +61,15 @@
 7. Orchestrator links the CCTP reference, Stellar transaction hash, wallet address, and final deposit status.
 
 This flow is limited to the web wallet interface. Consumer mobile wallets continue to use the embedded MPC wallet provider and do not expose CCTP receive in the initial architecture.
+
+## Web App DeFindex Vault Testing
+
+1. User opens the staging web app.
+2. Web app connects a Stellar-compatible testnet wallet through Stellar Wallets Kit.
+3. User selects a testnet DeFindex vault action such as deposit, withdraw, or balance lookup.
+4. Web app requests the required transaction or vault data through the DeFindex integration.
+5. User signs the testnet operation from the browser wallet.
+6. Orchestrator records the staging/testnet vault reference and related Stellar testnet transaction hash.
+7. Staging dashboard displays the testnet vault activity for product and reconciliation testing.
+
+This flow is staging/testnet only. It is not part of the production launch scope and is not exposed in the consumer mobile apps.

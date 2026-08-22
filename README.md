@@ -6,7 +6,7 @@ This repository documents the target architecture.
 
 ![Original Saldo architecture concept](diagrams/architecture.png)
 
-The Mermaid diagram below is the current target architecture, including the Circle CCTP web wallet receive flow.
+The Mermaid diagram below is the current target architecture, including the Circle CCTP production web wallet receive flow and the DeFindex staging/testnet web app integration.
 
 ## System Overview
 
@@ -23,6 +23,7 @@ flowchart TD
     core[Core backend<br/>Java]
     rails[External settlement rails<br/>Billers, alfredpay, MoneyGram, banks]
     cctp[Circle CCTP<br/>cross-chain USDC funding]
+    defindex[DeFindex<br/>staging/testnet web app only]
     stellarNet[Stellar network<br/>USDC transactions]
 
     android --> orchestrator
@@ -33,6 +34,8 @@ flowchart TD
     orchestrator --> core
     web --> cctp
     cctp --> orchestrator
+    web --> defindex
+    defindex --> orchestrator
 
     stellar --> stellarNet
     stellarNet --> stellar
@@ -71,7 +74,9 @@ Saldo exposes the same payment and wallet capabilities across three application 
 
 The mobile apps use an embedded non-custodial MPC wallet provider for consumer wallet provisioning. The provider is implementation infrastructure; the Stellar-specific work is account creation, USDC trustline management, transaction tracking, and reconciliation.
 
-The agent web interface can use Stellar Wallets Kit for wallet connection and signing flows where an agent or operator needs to connect a Stellar-compatible wallet from a browser. The web interface can also support inbound USDC funding from other chains through Circle CCTP. This cross-chain receive flow is scoped to the web wallet experience and is not part of the consumer mobile wallet flow.
+The agent web interface can use Stellar Wallets Kit for wallet connection and signing flows where an agent or operator needs to connect a Stellar-compatible wallet from a browser. The web interface can also support inbound USDC funding from other chains through Circle CCTP. This CCTP receive flow is scoped to the web wallet experience and is part of the production integration plan.
+
+The web app will also include a staging/testnet-only DeFindex integration for testing vault deposit, withdraw, and balance flows with testnet assets. DeFindex is not part of the production launch scope and is not exposed in the consumer mobile wallet flow.
 
 ### Orchestrator API
 
@@ -84,6 +89,7 @@ Its responsibilities are:
 - Maintain the internal ledger state for each transaction.
 - Store references to Stellar transaction hashes and partner transaction IDs.
 - Track inbound CCTP deposits initiated from the web interface.
+- Track DeFindex staging/testnet vault activity separately from production ledger activity.
 - Normalize statuses from Stellar, billers, alfredpay, MoneyGram, and bank/payment providers.
 - Expose transaction history and payment status to the client applications.
 
@@ -150,8 +156,18 @@ This gives support, reconciliation, and compliance teams one canonical place to 
 - MoneyGram for cash-in/cash-out through physical locations, subject to partner approval.
 - Stellar Wallets Kit for browser-based wallet connection and signing in the agent web interface.
 - Circle CCTP for web-only inbound USDC funding from other chains into Stellar USDC.
+- DeFindex for web app staging/testnet vault integration only; it is not included in production launch scope.
 
 The consumer mobile app may use an embedded MPC wallet provider, but that provider is not the primary SCF Integration Track building block.
+
+## Roadmap
+
+| Phase | Scope | Environment |
+| --- | --- | --- |
+| Wallet and ledger foundation | Embedded MPC mobile wallet, Stellar accounts, USDC trustlines, transaction history, and internal ledger references. | Testnet, then production |
+| Bill pay and settlement | USDC-funded bill pay, alfredpay SPEI/MXN settlement, MoneyGram/provider-ready cash rail adapter, and ops reconciliation. | Testnet, then production |
+| Web wallet integrations | Stellar Wallets Kit for browser signing and Circle CCTP for inbound USDC from other chains. | Production web app |
+| DeFindex exploration | Vault deposit, withdraw, balance, and reconciliation testing from the web app. | Staging/testnet only |
 
 ## Repository Contents
 
@@ -160,5 +176,6 @@ The consumer mobile app may use an embedded MPC wallet provider, but that provid
 - `docs/flows.md`: main transaction flows.
 - `docs/integrations.md`: Stellar and partner integration scope.
 - `docs/repositories.md`: repository map and ownership boundaries.
+- `docs/roadmap.md`: phased implementation roadmap.
 - `diagrams/system-architecture.mmd`: Mermaid source for the system diagram.
 - `diagrams/architecture.png`: original visual architecture concept.

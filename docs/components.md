@@ -33,6 +33,7 @@ Responsibilities:
 - Support agent workflows for cash position, limits, repayment status, and risk alerts.
 - Use Stellar Wallets Kit for browser wallet connection/signing where agent signing is required.
 - Support web-only inbound USDC funding from other chains through Circle CCTP.
+- Support DeFindex vault testing in staging/testnet only.
 
 ## Orchestrator API
 
@@ -44,6 +45,7 @@ Responsibilities:
 - Coordinate wallet, bill payment, SPEI, and cash-in/cash-out workflows.
 - Store Stellar transaction hashes and partner transaction references.
 - Track Circle CCTP transfer references for web wallet deposits.
+- Track DeFindex staging/testnet vault activity separately from production ledger activity.
 - Normalize transaction states across systems.
 - Expose transaction history and status to apps.
 
