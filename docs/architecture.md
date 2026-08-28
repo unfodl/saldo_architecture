@@ -37,7 +37,7 @@ flowchart TD
 
 ## Client Layer
 
-The mobile apps expose the consumer wallet and bill payment experience. Users can create a non-custodial wallet, view USDC balance, receive funds, send USDC, and pay supported Mexican billers from wallet balance. The mobile wallet is provisioned through an embedded MPC wallet provider.
+The mobile apps expose the consumer wallet and bill payment experience. Users can create a non-custodial wallet, view USDC balance, receive funds, send USDC, and pay supported Mexican billers from wallet balance. The mobile wallet is provisioned through an embedded MPC wallet provider, with SEP-30-style account recovery tested early on testnet before production rollout.
 
 The web application supports operations and agent-facing workflows. For agent or operator signing in the browser, the web app can use Stellar Wallets Kit to connect Stellar-compatible wallets and route signatures through a standard Stellar wallet connection layer.
 
@@ -49,11 +49,11 @@ The web application will also include a DeFindex integration in staging/testnet 
 
 The Orchestrator is the primary API for all apps. It acts as Saldo's transaction ledger and workflow coordinator. It stores the canonical state for wallet creation, bill payments, SPEI transfers, cash-in/cash-out requests, partner references, settlement status, and reconciliation data.
 
-The Orchestrator records both on-chain and off-chain references. A single Saldo transaction can include a Stellar transaction hash, CCTP transfer reference, alfredpay reference, SPEI reference, biller payment ID, MoneyGram reference, and compliance status. DeFindex staging/testnet vault activity is tracked separately from production ledger activity.
+The Orchestrator records both on-chain and off-chain references. A single Saldo transaction can include a Stellar transaction hash, CCTP transfer reference, alfredpay reference, SPEI reference, biller payment ID, MoneyGram reference, and compliance status. Wallet recovery events are tracked during the testnet SEP-30 recovery workstream. DeFindex staging/testnet vault activity is tracked separately from production ledger activity.
 
 ## Stellar Settlement Service
 
-The Stellar settlement service isolates Stellar protocol work from the rest of the product. It creates Stellar accounts and USDC trustlines, builds and submits transactions, monitors transaction status, and returns ledger results to the Orchestrator.
+The Stellar settlement service isolates Stellar protocol work from the rest of the product. It creates Stellar accounts and USDC trustlines, supports testnet recovery validation, builds and submits transactions, monitors transaction status, and returns ledger results to the Orchestrator.
 
 This service is intentionally narrow. It does not decide product workflow outcomes; it submits and monitors Stellar operations and gives the Orchestrator the data needed for reconciliation.
 

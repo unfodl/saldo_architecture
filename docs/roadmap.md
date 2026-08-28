@@ -8,8 +8,11 @@ Scope:
 
 - Embedded MPC mobile wallet provisioning.
 - Stellar account creation and USDC trustline setup.
+- SEP-30-style wallet recovery and new-device recovery testing.
 - Transaction history and wallet-user mapping.
 - Orchestrator ledger records for wallet and payment activity.
+
+Recovery is implemented and tested early on testnet before bill pay, cash rails, or production rollout depend on the wallet.
 
 ## Phase 2: Bill Pay and Settlement
 

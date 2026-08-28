@@ -72,7 +72,7 @@ Saldo exposes the same payment and wallet capabilities across three application 
 - iOS mobile app.
 - Web application for internal operations and agent-facing workflows.
 
-The mobile apps use an embedded non-custodial MPC wallet provider for consumer wallet provisioning. The provider is implementation infrastructure; the Stellar-specific work is account creation, USDC trustline management, transaction tracking, and reconciliation.
+The mobile apps use an embedded non-custodial MPC wallet provider for consumer wallet provisioning. The provider is implementation infrastructure; the Stellar-specific work is account creation, USDC trustline management, SEP-30-style account recovery testing, transaction tracking, and reconciliation.
 
 The agent web interface can use Stellar Wallets Kit for wallet connection and signing flows where an agent or operator needs to connect a Stellar-compatible wallet from a browser. The web interface can also support inbound USDC funding from other chains through Circle CCTP. This CCTP receive flow is scoped to the web wallet experience and is part of the production integration plan.
 
@@ -86,6 +86,7 @@ Its responsibilities are:
 
 - Create and track wallet records for users.
 - Coordinate wallet operations, bill payments, SPEI transfers, and cash-in/cash-out requests.
+- Track wallet recovery state and testnet recovery events.
 - Maintain the internal ledger state for each transaction.
 - Store references to Stellar transaction hashes and partner transaction IDs.
 - Track inbound CCTP deposits initiated from the web interface.
@@ -160,11 +161,15 @@ This gives support, reconciliation, and compliance teams one canonical place to 
 
 The consumer mobile app may use an embedded MPC wallet provider, but that provider is not the primary SCF Integration Track building block.
 
+## Supporting Stellar Standards
+
+- SEP-30 account recovery is an early testnet workstream for mobile wallet recovery and new-device recovery testing. It is not treated as a separate Integration Track building block.
+
 ## Roadmap
 
 | Phase | Scope | Environment |
 | --- | --- | --- |
-| Wallet and ledger foundation | Embedded MPC mobile wallet, Stellar accounts, USDC trustlines, transaction history, and internal ledger references. | Testnet, then production |
+| Wallet and ledger foundation | Embedded MPC mobile wallet, Stellar accounts, USDC trustlines, SEP-30 recovery testing, transaction history, and internal ledger references. | Testnet, then production |
 | Bill pay and settlement | USDC-funded bill pay, alfredpay SPEI/MXN settlement, MoneyGram/provider-ready cash rail adapter, and ops reconciliation. | Testnet, then production |
 | Web wallet integrations | Stellar Wallets Kit for browser signing and Circle CCTP for inbound USDC from other chains. | Production web app |
 | DeFindex exploration | Vault deposit, withdraw, balance, and reconciliation testing from the web app. | Staging/testnet only |

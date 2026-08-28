@@ -83,6 +83,22 @@ Integration scope:
 
 The MPC provider is intentionally not named as a primary SCF Integration Track building block.
 
+## SEP-30 Account Recovery
+
+SEP-30 account recovery is a supporting Stellar standard for the wallet recovery workstream. It is not treated as a separate Integration Track building block.
+
+Integration scope:
+
+- Validate wallet recovery and new-device recovery assumptions on testnet.
+- Track recovery events in the Orchestrator ledger.
+- Verify recovered wallet access and Stellar account state before enabling wallet activity.
+- Include recovery outcomes in testnet QA and security review.
+
+Production boundary:
+
+- SEP-30 recovery work starts on testnet before production launch.
+- Production rollout happens only after successful testnet recovery validation.
+
 ## Stellar Network
 
 Stellar is the USDC settlement network for wallet and payment flows.

@@ -10,6 +10,18 @@
 6. Orchestrator stores the wallet address and setup status.
 7. App shows wallet as ready.
 
+## Testnet Wallet Recovery
+
+1. User starts recovery from a new device in the mobile app.
+2. App calls the Orchestrator to begin the recovery workflow.
+3. Orchestrator creates a recovery event linked to the user's wallet record.
+4. The recovery flow validates SEP-30-style recovery assumptions on testnet.
+5. Stellar settlement service verifies recovered wallet access and testnet account state.
+6. Orchestrator stores the recovery outcome, device context, and testnet validation status.
+7. App shows the recovered wallet as ready only after recovery validation succeeds.
+
+This flow is implemented and tested early on testnet before production wallet rollout.
+
 ## USDC-Funded Bill Payment
 
 1. User selects a biller and confirms payment from USDC balance.

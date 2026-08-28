@@ -9,6 +9,7 @@ Responsibilities:
 - Call Orchestrator APIs.
 - Display wallet and payment state.
 - Trigger wallet creation through the backend.
+- Support testnet wallet recovery and new-device recovery testing.
 - Show Stellar transaction status and payment history.
 
 ## iOS App
@@ -20,6 +21,7 @@ Responsibilities:
 - Call Orchestrator APIs.
 - Display wallet and payment state.
 - Support USDC-funded bill pay flows.
+- Support testnet wallet recovery and new-device recovery testing.
 - Show transaction history and settlement status.
 
 ## Web App
@@ -43,6 +45,7 @@ Responsibilities:
 
 - Maintain the canonical transaction ledger.
 - Coordinate wallet, bill payment, SPEI, and cash-in/cash-out workflows.
+- Track wallet recovery state and testnet recovery events.
 - Store Stellar transaction hashes and partner transaction references.
 - Track Circle CCTP transfer references for web wallet deposits.
 - Track DeFindex staging/testnet vault activity separately from production ledger activity.
@@ -56,6 +59,7 @@ TypeScript service for Stellar network operations.
 Responsibilities:
 
 - Create Stellar accounts and USDC trustlines.
+- Support SEP-30-style recovery validation on testnet.
 - Build and submit Stellar transactions.
 - Monitor submitted transaction status.
 - Return hashes, ledger status, and failure details.
