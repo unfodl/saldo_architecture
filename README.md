@@ -143,6 +143,8 @@ This gives support, reconciliation, and compliance teams one canonical place to 
 
 ## Example Flow: USDC-Funded Bill Payment
 
+![Example mobile wallet and bill pay flow](diagrams/example-mobile-flow.png)
+
 1. A user selects a Mexican biller and chooses to pay from USDC balance.
 2. The client app sends the request to the Orchestrator.
 3. The Orchestrator creates an internal payment record and requests the required Stellar operation from the Stellar settlement service.
@@ -184,3 +186,4 @@ The consumer mobile app may use an embedded MPC wallet provider, but that provid
 - `docs/roadmap.md`: phased implementation roadmap.
 - `diagrams/system-architecture.mmd`: Mermaid source for the system diagram.
 - `diagrams/architecture.png`: original visual architecture concept.
+- `diagrams/example-mobile-flow.png`: mobile screen flow showing login, wallet home, and biller selection.

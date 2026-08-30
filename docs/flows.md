@@ -24,6 +24,10 @@ This flow is implemented and tested early on testnet before production wallet ro
 
 ## USDC-Funded Bill Payment
 
+![Example mobile wallet and bill pay flow](../diagrams/example-mobile-flow.png)
+
+The example mobile flow shows the user moving from login/recovery into the wallet home screen, then into the Mexico services screen where supported bill pay companies are listed.
+
 1. User selects a biller and confirms payment from USDC balance.
 2. App sends payment request to the Orchestrator.
 3. Orchestrator creates a Saldo payment record.
