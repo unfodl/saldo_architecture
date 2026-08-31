@@ -84,8 +84,6 @@ Integration scope:
 - Recovery and new-device flows.
 - Wallet-user mapping through the Orchestrator.
 
-The MPC provider is intentionally not named as a primary SCF Integration Track building block.
-
 ## SEP-30 Account Recovery
 
 SEP-30 account recovery is a supporting Stellar standard for the wallet recovery workstream. It is not treated as a separate Integration Track building block.

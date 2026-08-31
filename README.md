@@ -193,8 +193,7 @@ This gives support, reconciliation, and compliance teams one canonical place to 
 - Stellar Wallets Kit for browser-based wallet connection and signing in the agent web interface.
 - Circle CCTP for web-only inbound USDC funding from other chains into Stellar USDC.
 - DeFindex for web app staging/testnet vault integration only; it is not included in production launch scope.
-
-The consumer mobile app may use an embedded MPC wallet provider, but that provider is not the primary SCF Integration Track building block.
+- MPC embeddable wallet provider for the mobile non-custodial wallet.
 
 ## Supporting Stellar Standards
 
