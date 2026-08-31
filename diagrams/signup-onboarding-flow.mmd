@@ -1,0 +1,26 @@
+sequenceDiagram
+    autonumber
+    participant Mobile as Mobile app
+    participant Orchestrator as Orchestrator API
+    participant UserStore as User/contact store
+    participant MPC as Embedded MPC wallet provider
+    participant Stellar as Stellar settlement service
+
+    Mobile->>Orchestrator: Start signup with email or phone
+    Orchestrator->>UserStore: Check whether email or phone exists
+
+    alt Email or phone already exists
+        UserStore-->>Orchestrator: Existing user found
+        Orchestrator-->>Mobile: Start login or recovery flow
+    else New user
+        UserStore-->>Orchestrator: No existing user
+        Orchestrator->>UserStore: Create pending user file
+        Orchestrator->>MPC: Provision embedded non-custodial wallet
+        MPC-->>Orchestrator: Wallet address and provisioning status
+        Orchestrator->>Stellar: Create or verify account and USDC trustline
+        Stellar-->>Orchestrator: Stellar account and trustline status
+        Orchestrator->>UserStore: Mark user file active with wallet reference
+        Orchestrator-->>Mobile: Signup complete and wallet ready
+    end
+
+    Note over Orchestrator,MPC: Full signup is not considered complete until the user file exists and the embedded wallet has been created.

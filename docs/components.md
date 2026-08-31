@@ -8,6 +8,7 @@ Responsibilities:
 
 - Call Orchestrator APIs.
 - Display wallet and payment state.
+- Start signup with email or phone through the Orchestrator.
 - Trigger wallet creation through the backend.
 - Support testnet wallet recovery and new-device recovery testing.
 - Show Stellar transaction status and payment history.
@@ -20,6 +21,7 @@ Responsibilities:
 
 - Call Orchestrator APIs.
 - Display wallet and payment state.
+- Start signup with email or phone through the Orchestrator.
 - Support USDC-funded bill pay flows.
 - Support testnet wallet recovery and new-device recovery testing.
 - Show transaction history and settlement status.
@@ -44,6 +46,7 @@ TypeScript service used by all apps.
 Responsibilities:
 
 - Maintain the canonical transaction ledger.
+- Verify whether signup email or phone already exists.
 - Coordinate wallet, bill payment, SPEI, and cash-in/cash-out workflows.
 - Track wallet recovery state and testnet recovery events.
 - Store Stellar transaction hashes and partner transaction references.
@@ -74,6 +77,6 @@ Responsibilities:
 - Integrate with Mexican billers and service providers.
 - Integrate with banks and payment providers.
 - Integrate with alfredpay for USDC-to-MXN settlement and SPEI.
-- Integrate with MoneyGram or provider-ready cash rail adapters.
+- Integrate with MoneyGram using SEP-10 and SEP-24, or provider-ready cash rail adapters.
 - Apply compliance checks and transaction controls.
 - Return external settlement state to the Orchestrator.

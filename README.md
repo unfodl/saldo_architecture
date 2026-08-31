@@ -49,6 +49,39 @@ flowchart TD
 
 Blue boxes in the product diagram represent Saldo-owned systems. Gray boxes represent external partners and payment rails.
 
+## Signup And Wallet Provisioning
+
+Signup is coordinated by the Orchestrator rather than the mobile app. The mobile app starts the flow with an email or phone number; the Orchestrator checks whether that contact already exists, creates the user file if it is new, provisions the embedded non-custodial MPC wallet, and only then marks signup as complete.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Mobile as Mobile app
+    participant Orchestrator as Orchestrator API
+    participant UserStore as User/contact store
+    participant MPC as Embedded MPC wallet provider
+    participant Stellar as Stellar settlement service
+
+    Mobile->>Orchestrator: Start signup with email or phone
+    Orchestrator->>UserStore: Check whether email or phone exists
+
+    alt Email or phone already exists
+        UserStore-->>Orchestrator: Existing user found
+        Orchestrator-->>Mobile: Start login or recovery flow
+    else New user
+        UserStore-->>Orchestrator: No existing user
+        Orchestrator->>UserStore: Create pending user file
+        Orchestrator->>MPC: Provision embedded non-custodial wallet
+        MPC-->>Orchestrator: Wallet address and provisioning status
+        Orchestrator->>Stellar: Create or verify account and USDC trustline
+        Stellar-->>Orchestrator: Stellar account and trustline status
+        Orchestrator->>UserStore: Mark user file active with wallet reference
+        Orchestrator-->>Mobile: Signup complete and wallet ready
+    end
+
+    Note over Orchestrator,MPC: Full signup is not complete until the user file exists and the embedded wallet has been created.
+```
+
 ## Repository Map
 
 Saldo is split across public architecture/demo repositories and private production repositories:
@@ -166,6 +199,7 @@ The consumer mobile app may use an embedded MPC wallet provider, but that provid
 ## Supporting Stellar Standards
 
 - SEP-30 account recovery is an early testnet workstream for mobile wallet recovery and new-device recovery testing. It is not treated as a separate Integration Track building block.
+- SEP-10 authentication and SEP-24 interactive deposit/withdraw are used for the MoneyGram Stellar cash-in/cash-out implementation. They are supporting Stellar standards for the MoneyGram integration, not separate building blocks.
 
 ## Roadmap
 
@@ -185,5 +219,6 @@ The consumer mobile app may use an embedded MPC wallet provider, but that provid
 - `docs/repositories.md`: repository map and ownership boundaries.
 - `docs/roadmap.md`: phased implementation roadmap.
 - `diagrams/system-architecture.mmd`: Mermaid source for the system diagram.
+- `diagrams/signup-onboarding-flow.mmd`: Mermaid source for signup and wallet provisioning.
 - `diagrams/architecture.png`: original visual architecture concept.
 - `diagrams/example-mobile-flow.png`: mobile screen flow showing login, wallet home, and biller selection.

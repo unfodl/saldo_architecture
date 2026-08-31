@@ -22,6 +22,7 @@ Scope:
 
 - USDC-funded bill payment.
 - alfredpay SPEI and USDC-to-MXN settlement.
+- MoneyGram SEP-10 authentication and SEP-24 interactive deposit/withdraw flows.
 - MoneyGram or provider-ready cash-in/cash-out adapter.
 - Operations dashboard and reconciliation exports.
 

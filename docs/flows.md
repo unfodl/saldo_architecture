@@ -1,5 +1,38 @@
 # Transaction Flows
 
+## Signup And Wallet Provisioning
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Mobile as Mobile app
+    participant Orchestrator as Orchestrator API
+    participant UserStore as User/contact store
+    participant MPC as Embedded MPC wallet provider
+    participant Stellar as Stellar settlement service
+
+    Mobile->>Orchestrator: Start signup with email or phone
+    Orchestrator->>UserStore: Check whether email or phone exists
+
+    alt Email or phone already exists
+        UserStore-->>Orchestrator: Existing user found
+        Orchestrator-->>Mobile: Start login or recovery flow
+    else New user
+        UserStore-->>Orchestrator: No existing user
+        Orchestrator->>UserStore: Create pending user file
+        Orchestrator->>MPC: Provision embedded non-custodial wallet
+        MPC-->>Orchestrator: Wallet address and provisioning status
+        Orchestrator->>Stellar: Create or verify account and USDC trustline
+        Stellar-->>Orchestrator: Stellar account and trustline status
+        Orchestrator->>UserStore: Mark user file active with wallet reference
+        Orchestrator-->>Mobile: Signup complete and wallet ready
+    end
+
+    Note over Orchestrator,MPC: Full signup is not complete until the user file exists and the embedded wallet has been created.
+```
+
+The mobile app never treats signup as complete by itself. Signup completes only after the Orchestrator has created the user file, provisioned the embedded wallet, and stored the wallet reference.
+
 ## Wallet Provisioning
 
 1. User starts onboarding in the mobile app.
@@ -49,13 +82,15 @@ The example mobile flow shows the user moving from login/recovery into the walle
 
 ## Cash-In / Cash-Out
 
-1. User starts a cash-in or cash-out flow.
+1. User starts a MoneyGram cash-in or cash-out flow.
 2. App calls the Orchestrator.
 3. Orchestrator creates the cash transaction record.
-4. Java Core Backend routes the request through MoneyGram if approved, or through a provider-ready cash rail adapter.
-5. Stellar settlement service handles any required USDC movement.
-6. Core Backend returns external provider reference and status.
-7. Orchestrator reconciles Stellar and cash rail state.
+4. Wallet authenticates with the MoneyGram Stellar anchor using SEP-10.
+5. Java Core Backend starts the SEP-24 interactive deposit or withdrawal flow.
+6. User completes the MoneyGram webview/browser flow.
+7. Stellar settlement service handles the required USDC movement and memo handling.
+8. Core Backend polls transaction status and returns the MoneyGram reference and status.
+9. Orchestrator reconciles Stellar and cash rail state.
 
 ## Agent Web Signing
 

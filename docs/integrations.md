@@ -21,9 +21,12 @@ MoneyGram is used for cash-in/cash-out through physical locations, subject to pa
 
 Integration scope:
 
+- Stellar SEP-10 authentication with the MoneyGram anchor.
+- SEP-24 interactive deposit and withdrawal for cash-in/cash-out.
 - Provider-ready cash-in/cash-out adapter.
 - External transaction reference capture.
 - Status tracking and reconciliation.
+- MoneyGram webview/browser handoff and return-status handling.
 - Connection to MoneyGram first if approval is complete.
 
 If approval is not complete, the deliverable remains a provider-ready cash rail adapter that can connect to MoneyGram or another approved provider.
@@ -98,6 +101,24 @@ Production boundary:
 
 - SEP-30 recovery work starts on testnet before production launch.
 - Production rollout happens only after successful testnet recovery validation.
+
+## SEP-10 And SEP-24 For MoneyGram
+
+SEP-10 and SEP-24 are supporting Stellar standards used by the MoneyGram cash-in/cash-out integration. They are not treated as separate Integration Track building blocks.
+
+Integration scope:
+
+- Use SEP-10 Stellar Web Auth before MoneyGram SEP-24 deposit or withdrawal requests.
+- Use SEP-24 interactive deposit for cash-in and interactive withdrawal for cash-out.
+- Open the MoneyGram interactive flow in a webview or browser surface.
+- Store SEP-24 transaction IDs, MoneyGram reference numbers, Stellar transaction hashes, and final transaction status in the Orchestrator ledger.
+- Support status polling, user-transfer states, refund/cancel states, and operational reconciliation.
+
+Testnet/sandbox scope:
+
+- Complete MoneyGram allowlisting and sandbox/testnet setup before production.
+- Validate SEP-10 challenge signing, SEP-24 deposit, SEP-24 withdrawal, and refund/cancel handling in sandbox.
+- Move to production only after certification, KYB/legal completion, and production domain/key setup.
 
 ## Stellar Network
 
