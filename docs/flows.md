@@ -1,6 +1,6 @@
 # Transaction Flows
 
-All flows are proposed SCF #46 behavior unless an evidence label says otherwise.
+These flows define the target SCF #46 behavior.
 
 ## Signup And Wallet Provisioning
 
@@ -35,7 +35,7 @@ sequenceDiagram
     Orchestrator-->>Mobile: Wallet READY
 ```
 
-The app must not display `READY` until identity mapping, account activation, network, and USDC asset checks pass. The party funding base reserve or sponsoring account/trustline entries is **Pending technical confirmation**.
+The app displays `READY` only after identity mapping, account activation, network, and USDC asset checks pass. Reserve and trustline sponsorship ownership must be confirmed before implementation.
 
 ## Send Or Receive USDC
 
@@ -64,7 +64,7 @@ The app displays the confirmed Stellar address and network plus an explicit USDC
 7. A cooling period or enhanced verification applies to high-risk recovery followed by transfer.
 8. A small test transaction proves authorization before normal limits are restored.
 
-This uses Crossmint recovery infrastructure, not SEP-30. Whether the exact Stellar mobile configuration supports this sequence and which actors can invoke each step is **Pending technical confirmation**.
+Recovery uses Crossmint's configured recovery infrastructure. The production authority matrix must identify every actor able to invoke each step.
 
 ## USDC-Funded Bill Payment
 
@@ -115,7 +115,7 @@ If the quote expires before signing, the transaction is not submitted; a new quo
 
 ## MoneyGram Cash-In/Cash-Out
 
-MoneyGram currently documents both a widget/API flow for new Stellar pilots and a legacy SEP-10/SEP-24 anchor flow. Saldo must select and certify one path; it must not mix protocol steps from both in an implementation claim.
+Saldo will implement and certify one MoneyGram path: the widget/API flow or the SEP-10/SEP-24 anchor flow. The selected path determines authentication, session, callback, and polling behavior.
 
 ### Common Flow
 
@@ -127,7 +127,7 @@ MoneyGram currently documents both a widget/API flow for new Stellar pilots and 
 6. Java backend consumes authenticated callback data if available and polls authoritative status as a fallback.
 7. Orchestrator reconciles provider ID, MoneyGram reference, transaction hash, amount, wallet, and terminal status.
 
-For the legacy path, SEP-10 authentication precedes SEP-24 deposit/withdraw and the SEP-24 transaction ID is polled. For the current widget/API path, a server-created short-lived session and sign callback are used; the widget handles anchor interaction. Exact credentials, supported corridors, callbacks, certification, and production authorization are **Pending technical confirmation**.
+For SEP-10/SEP-24, authentication precedes deposit/withdraw and the transaction ID is polled. For widget/API, the server creates a short-lived session and the app handles the sign callback. Credentials, corridors, callbacks, certification, and production authorization are production dependencies.
 
 ## Disputes And Inconsistent State
 

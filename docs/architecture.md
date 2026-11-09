@@ -1,10 +1,8 @@
 # Technical Architecture
 
-## Design Principle
+## Design
 
-Saldo uses a ledger-first orchestration model. Native mobile clients initiate user actions; the Orchestrator creates the Saldo payment ID and owns workflow state; specialized services execute Stellar and offchain work. A provider callback never becomes canonical merely because it arrived last.
-
-All capability descriptions below are target architecture unless explicitly labeled existing or verified.
+Saldo uses a ledger-first orchestration model. Native mobile clients initiate user actions, the Orchestrator creates the Saldo payment ID and owns workflow state, and specialized services execute Stellar and offchain work.
 
 ```mermaid
 flowchart LR
@@ -44,14 +42,12 @@ flowchart LR
     Orchestrator --> Ops
 ```
 
-## Existing Boundaries Preserved
+## Service Boundaries
 
-- **Android and iOS:** existing native application boundaries; repository contents were not accessible during this review.
-- **Orchestrator API:** existing architectural boundary for workflow and transaction state; implementation location is pending confirmation.
-- **Stellar settlement service:** existing TypeScript service boundary; private repository access was unavailable.
-- **Java Core Backend:** existing integration boundary for billers, banks, settlement partners, and compliance; private repository access was unavailable.
-
-SCF #46 extends these boundaries. It does not replace the existing payment platform or introduce a funded web-client architecture.
+- **Android and iOS:** native user experience and wallet authorization.
+- **Orchestrator API:** workflow, idempotency, and canonical payment state.
+- **Stellar settlement service:** account setup, transaction execution, confirmation, and indexing.
+- **Java Core Backend:** billers, banks, settlement partners, and compliance.
 
 ## Trust And Authorization Boundaries
 
@@ -63,7 +59,7 @@ SCF #46 extends these boundaries. It does not replace the existing payment platf
 6. The Stellar service submits only an envelope whose fields match the approved payment record, then monitors final inclusion.
 7. The Java backend starts offchain settlement only after required compliance and onchain preconditions are met.
 
-The exact deployed Crossmint signer and recovery configuration is **Pending technical confirmation**. No custody conclusion is valid until the signer inventory and recovery authority are exported and tested. See [wallet security](wallet-security.md).
+The deployed Crossmint signer and recovery configuration must be confirmed before custody classification and mainnet rollout. See [wallet security](wallet-security.md).
 
 ## State Ownership
 

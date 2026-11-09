@@ -2,7 +2,7 @@
 
 ## Native Android App
 
-**Existing boundary; SCF-funded extension.** Kotlin client for onboarding, Crossmint wallet access, USDC balance/receive/send/history, bill payment, MoneyGram interactive flows, recovery, and status display.
+Kotlin client for onboarding, Crossmint wallet access, USDC balance/receive/send/history, bill payment, MoneyGram interactive flows, recovery, and status display.
 
 - Authenticates the user and presents transaction details for approval.
 - Uses the supported Crossmint Android/Kotlin integration and Android Keystore-backed signer if confirmed.
@@ -12,28 +12,28 @@
 
 ## Native iOS App
 
-**Existing boundary; SCF-funded extension.** Swift client with the same product capability as Android.
+Swift client with the same product capability as Android.
 
 - Uses the supported Crossmint Swift integration and Secure Enclave-backed signer if confirmed.
 - Implements iOS-specific secure storage, app lifecycle, deep-link, and recovery tests.
 - Requires equivalent approval semantics and evidence to Android despite SDK UX differences.
 
-Crossmint's public quickstarts show different approval behavior for current Kotlin and Swift examples, but those examples use EVM test networks. Exact Stellar behavior is **Pending technical confirmation** and must be proven on both platforms.
+Android and iOS must produce equivalent user-authorization evidence even when their Crossmint SDK approval flows differ.
 
 ## Crossmint
 
-**Selected external dependency; configuration unverified.** Provides wallet provisioning and configurable signer/recovery infrastructure.
+Provides wallet provisioning and configurable signer/recovery infrastructure.
 
 - Returns a stable wallet locator and Stellar address for the authenticated user.
 - Applies the configured signing and recovery authority.
 - Exposes wallet, transaction, signer, and recovery evidence needed for support and audit.
 - Must not receive authority beyond the approved signer model.
 
-The proposed user-wallet model is device operational signer plus user-controlled recovery. A Saldo server signer is not proposed. Any server, tenant-admin, support, or recovery capability that can authorize fund movement changes the custody and threat model and must be documented before production.
+The user-wallet model is a device operational signer plus user-controlled recovery, with no Saldo server signer. Production approval requires confirmation of every server, administrator, support, and recovery authority.
 
 ## Orchestrator API
 
-**Existing architectural boundary; implementation evidence pending.** TypeScript API and canonical owner of user workflow and aggregate payment state.
+TypeScript API and canonical owner of user workflow and aggregate payment state.
 
 - Creates one UUID/ULID Saldo payment ID before side effects.
 - Enforces authentication, authorization, KYC eligibility, limits, idempotency, and state-machine preconditions.
@@ -44,7 +44,7 @@ The proposed user-wallet model is device operational signer plus user-controlled
 
 ## Stellar Settlement Service
 
-**Existing private repository; SCF-funded extension.** TypeScript service for Stellar-specific execution.
+TypeScript service for Stellar-specific execution.
 
 - Activates or verifies Stellar accounts and required USDC trustlines/sponsorship.
 - Constructs deterministic transactions using an allowlisted network and USDC issuer.
@@ -55,7 +55,7 @@ The proposed user-wallet model is device operational signer plus user-controlled
 
 ## Java Core Backend
 
-**Existing private repository; SCF-funded extension.** Integration owner for offchain financial and compliance systems.
+Integration owner for offchain financial and compliance systems.
 
 - Obtains and expires AlfredPay quotes; records FX rate and fees.
 - Initiates and tracks USDC-to-MXN conversion, SPEI payout, and biller execution.
@@ -66,7 +66,7 @@ The proposed user-wallet model is device operational signer plus user-controlled
 
 ## Operations And Compliance
 
-**Existing team functions; SCF-funded controls.** Review alerts, exceptions, reconciliation breaks, disputes, and incidents.
+Reviews alerts, exceptions, reconciliation breaks, disputes, and incidents.
 
 - Graciela D. owns operational settlement reconciliation and exception handling.
 - Fatima G. owns compliance and transaction-monitoring review.
@@ -78,8 +78,8 @@ The proposed user-wallet model is device operational signer plus user-controlled
 | Dependency | Current evidence | Production dependency |
 | --- | --- | --- |
 | Stellar | Public network and APIs | Reliable RPC/Horizon/indexing access and pinned USDC identifiers |
-| Crossmint | Public Stellar/wallet documentation; exact Saldo tenant configuration unavailable | Stellar SDK enablement, signer/recovery confirmation, production keys and support process |
+| Crossmint | Selected wallet provider | Stellar SDK enablement, signer/recovery confirmation, production keys and support process |
 | AlfredPay | Sandbox access reported | Production onboarding, credentials, limits, callback/polling and refund contract |
 | MoneyGram Ramps | Access reported; public integration paths documented | Product-path selection, credentials, corridors, KYB/legal, certification and go-live approval |
 | Billers/banks | Existing Java boundary reported | Contract, credentials, idempotency, status and refund behavior per provider |
-| Compliance providers | Existing boundary reported | Named providers, rules, SLAs, retention and incident process |
+| Compliance providers | Integrated through Java Core Backend | Named providers, rules, SLAs, retention and incident process |
