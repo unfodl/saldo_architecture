@@ -1,131 +1,73 @@
 # Integrations
 
-## SCF Integration Track Building Blocks
+## Crossmint Embedded Stellar Wallets
 
-Saldo's Integration Track work focuses on production building blocks plus one staging/testnet-only DeFindex integration.
+Crossmint is the sole selected wallet provider for SCF #46. Official documentation lists Stellar wallet support, native Kotlin and Swift SDKs, device signers, multiple recovery methods, and configurable custody models. Public Kotlin/Swift quickstarts currently demonstrate EVM testnet examples, so Saldo's exact Stellar mobile methods and approval UX must be validated rather than inferred.
 
-## alfredpay
+Integration requirements:
 
-alfredpay is used for USDC-to-MXN settlement, SPEI transfers, and local banking rail connectivity across Latin America.
+- Bind an immutable Saldo user ID to the authenticated Crossmint identity, wallet locator, and Stellar address.
+- Provision or retrieve exactly one intended pilot wallet per user/environment unless product rules explicitly allow more.
+- Confirm Stellar account activation, base reserve sponsorship, USDC trustline creation, and fee sponsorship behavior.
+- Construct transactions in the Stellar service and authorize them only through the configured Crossmint signer path.
+- Verify the signed envelope matches the payment record before submission.
+- Configure and test recovery on a new Android and iOS device.
+- Export signer/recovery configuration evidence for custody and security review.
 
-Integration scope:
+Proposed configuration: device-held operational signer plus user-controlled recovery factor; no Saldo server signer on user wallets. This is **Pending technical confirmation**. See [wallet security](wallet-security.md).
 
-- USDC-to-MXN settlement workflow.
-- SPEI transfer initiation and tracking.
-- Quote, FX rate, fee, and settlement status handling.
-- Reconciliation records across Stellar transaction, alfredpay transaction, MXN payout, and biller payment.
+Official references: [Crossmint wallets overview](https://docs.crossmint.com/wallets/overview), [supported chains](https://docs.crossmint.com/introduction/supported-chains), [custody models](https://docs.crossmint.com/wallets/concepts/custody-models), [recovery methods](https://docs.crossmint.com/wallets/concepts/recovery), [Kotlin quickstart](https://docs.crossmint.com/wallets/quickstarts/kotlin), and [Swift quickstart](https://docs.crossmint.com/wallets/quickstarts/swift).
 
-## MoneyGram
+## Stellar And USDC
 
-MoneyGram is used for cash-in/cash-out through physical locations, subject to partner approval.
+- Environment is explicit on every request; testnet and mainnet records cannot share identifiers.
+- Asset is a configured `(network, code, issuer)` tuple, not code `USDC` alone.
+- Mainnet and testnet issuer values are pinned from authoritative sources during environment setup and covered by tests; no user-supplied issuer is accepted.
+- Account activation, trustline/sponsorship, transaction time bounds, sequence handling, fees, memos, result codes, hashes, ledger sequences, and operation IDs are recorded.
+- Indexing uses Stellar network data as onchain truth and can replay from a durable cursor.
 
-Integration scope:
+## AlfredPay
 
-- Stellar SEP-10 authentication with the MoneyGram anchor.
-- SEP-24 interactive deposit and withdrawal for cash-in/cash-out.
-- Provider-ready cash-in/cash-out adapter.
-- External transaction reference capture.
-- Status tracking and reconciliation.
-- MoneyGram webview/browser handoff and return-status handling.
-- Connection to MoneyGram first if approval is complete.
+**Reported status: sandbox access. Production onboarding is outstanding unless independent evidence is added.**
 
-If approval is not complete, the deliverable remains a provider-ready cash rail adapter that can connect to MoneyGram or another approved provider.
+The Java Core Backend owns the integration:
 
-## Stellar Wallets Kit
+1. Request a quote containing source/destination assets, amounts, FX rate, fees, expiry, and quote ID.
+2. Present exact user economics before authorization; reject an expired or changed quote.
+3. Initiate USDC-to-MXN conversion and SPEI payout with the Saldo payment ID as idempotency/correlation data where supported.
+4. Store AlfredPay transaction ID, quote ID, SPEI reference, provider status, timestamps, and raw-payload digest.
+5. Verify callback authenticity and event IDs; poll as fallback or when callbacks are not supported.
+6. Normalize pending, completed, rejected, failed, reversed, cancelled, and refunded states without discarding provider detail.
+7. Reconcile AlfredPay amount/fees/rate and SPEI/biller outcome against the confirmed Stellar leg.
 
-Stellar Wallets Kit is used in the web interface for browser wallet connection and signing.
+Pending confirmation: production agreement and credentials, sandbox/production parity, rate limits, quote validity, webhook authentication, idempotency semantics, status lifecycle, refunds, reversals, supported corridors, limits, and operational SLAs.
 
-Integration scope:
+## MoneyGram Ramps
 
-- Connect Stellar-compatible wallets from the agent web interface.
-- Request signatures for agent or operations workflows.
-- Pass signed payloads to backend services for execution and reconciliation.
+MoneyGram is a named deliverable. A generic cash-rail adapter does not satisfy acceptance.
 
-Stellar Wallets Kit is not used as the main consumer mobile wallet. Consumer mobile wallets use an embedded non-custodial MPC provider.
+MoneyGram's current public documentation describes two Stellar integration paths:
 
-## Circle CCTP
+- A widget/API-key path recommended for new Stellar pilots. The server creates a short-lived session; the mobile surface embeds the widget; a sign callback authorizes the Stellar USDC transfer; status endpoints and callbacks/polling provide transaction state.
+- A legacy anchor path for existing partners using SEP-10 authentication and SEP-24 interactive deposit/withdraw, with provider transaction IDs and status polling.
 
-Circle CCTP is used for web-only inbound USDC funding from supported external chains into Stellar USDC.
+Saldo must confirm with MoneyGram which path applies before implementation. Common requirements are authenticated server-side setup, allowlisted interactive origins, provider transaction ID capture, exact wallet/amount/memo verification, user signing for cash-out, inbound payment detection for cash-in, terminal-state handling, cancellation/refund behavior, and reconciliation.
 
-Integration scope:
+For the legacy path only:
 
-- Add cross-chain USDC receive flow to the web wallet interface.
-- Capture CCTP transfer references.
-- Monitor resulting Stellar USDC receipt.
-- Link CCTP reference, Stellar transaction hash, wallet address, and deposit status in the Orchestrator ledger.
+- Discover current endpoints and signing keys from MoneyGram's `stellar.toml`; do not hardcode documentation examples.
+- Verify the SEP-10 challenge network, domain, signing key, nonce, timeout, and transaction content before signing.
+- Start SEP-24 deposit/withdraw only with the resulting short-lived token.
+- Store the SEP-24 ID and poll authoritative transaction status through completion, refund, expiry, or error.
 
-Circle CCTP is part of the production web app plan. It is not part of the initial consumer mobile wallet flow. Mobile wallets continue to use the embedded MPC provider and Stellar USDC account model.
+Production is gated by selected-path confirmation, credentials, allowlisting, supported corridors/locations, KYB and legal completion, certification results, production domains/keys, compliance authorization, and incident contacts. Access reported by the team is not evidence of production approval.
 
-## DeFindex
+Official references: [MoneyGram Stellar/USDC guide](https://xramps.moneygram.com/ops/developer/guides/stellar) and [MoneyGram widget/API guide](https://xramps.moneygram.com/ops/developer/guides/web-stellar).
 
-DeFindex is used only for staging/testnet exploration from the web app.
+## Billers, Banks, And Compliance Providers
 
-Integration scope:
+These remain behind the Java Core Backend. Each adapter must define authentication, idempotency, request signing, callback verification, timeout, retry, terminal states, reversals/refunds, reconciliation fields, rate limits, and data-retention constraints. Their existence is part of the reported current backend; exact providers and production status require private-repository and contract evidence.
 
-- Add testnet vault deposit, withdraw, and balance flows to the web app.
-- Connect testnet signing through Stellar Wallets Kit.
-- Track DeFindex vault references and related Stellar testnet transaction hashes.
-- Validate dashboard and reconciliation patterns for vault-style activity.
+## Explicitly Excluded Integrations
 
-Production boundary:
-
-- DeFindex is not part of the production launch scope.
-- No production user funds are routed to DeFindex.
-- DeFindex is not exposed in the consumer mobile wallet flow.
-- DeFindex activity is tracked separately from production bill pay, SPEI, cash-in/cash-out, and CCTP activity.
-
-## MPC Wallet Provider
-
-The MPC wallet provider is implementation infrastructure for the consumer mobile app.
-
-Integration scope:
-
-- Embedded non-custodial wallet provisioning.
-- Recovery and new-device flows.
-- Wallet-user mapping through the Orchestrator.
-
-## SEP-30 Account Recovery
-
-SEP-30 account recovery is a supporting Stellar standard for the wallet recovery workstream. It is not treated as a separate Integration Track building block.
-
-Integration scope:
-
-- Validate wallet recovery and new-device recovery assumptions on testnet.
-- Track recovery events in the Orchestrator ledger.
-- Verify recovered wallet access and Stellar account state before enabling wallet activity.
-- Include recovery outcomes in testnet QA and security review.
-
-Production boundary:
-
-- SEP-30 recovery work starts on testnet before production launch.
-- Production rollout happens only after successful testnet recovery validation.
-
-## SEP-10 And SEP-24 For MoneyGram
-
-SEP-10 and SEP-24 are supporting Stellar standards used by the MoneyGram cash-in/cash-out integration. They are not treated as separate Integration Track building blocks.
-
-Integration scope:
-
-- Use SEP-10 Stellar Web Auth before MoneyGram SEP-24 deposit or withdrawal requests.
-- Use SEP-24 interactive deposit for cash-in and interactive withdrawal for cash-out.
-- Open the MoneyGram interactive flow in a webview or browser surface.
-- Store SEP-24 transaction IDs, MoneyGram reference numbers, Stellar transaction hashes, and final transaction status in the Orchestrator ledger.
-- Support status polling, user-transfer states, refund/cancel states, and operational reconciliation.
-
-Testnet/sandbox scope:
-
-- Complete MoneyGram allowlisting and sandbox/testnet setup before production.
-- Validate SEP-10 challenge signing, SEP-24 deposit, SEP-24 withdrawal, and refund/cancel handling in sandbox.
-- Move to production only after certification, KYB/legal completion, and production domain/key setup.
-
-## Stellar Network
-
-Stellar is the USDC settlement network for wallet and payment flows.
-
-Integration scope:
-
-- Stellar account creation.
-- USDC trustline setup.
-- Transaction building, submission, and monitoring.
-- Transaction hash storage for reconciliation.
-- Testnet pilot followed by mainnet rollout.
+Stellar Wallets Kit, Circle CCTP, cross-chain funding, DeFindex, Visa prepaid cards, lending, and credit products are not SCF #46 deliverables. They must not appear in current funded flows, diagrams, budgets, or acceptance metrics.

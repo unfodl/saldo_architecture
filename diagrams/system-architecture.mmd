@@ -1,28 +1,35 @@
-flowchart TD
-    android[Android app]
-    ios[iOS app]
-    web[Web app]
+flowchart LR
+    subgraph Client[Native mobile boundary]
+        Android[Android / Kotlin]
+        iOS[iOS / Swift]
+    end
 
-    orchestrator[Orchestrator API<br/>TypeScript<br/>workflow ledger]
-    stellar[Stellar settlement service<br/>TypeScript<br/>transaction submission and monitoring]
-    core[Core backend<br/>Java<br/>billers, banks, compliance]
-    rails[External settlement rails<br/>alfredpay, MoneyGram, billers, banks]
-    cctp[Circle CCTP<br/>web-only cross-chain USDC receive]
-    defindex[DeFindex<br/>staging/testnet web app only]
-    network[Stellar network<br/>USDC]
+    subgraph Saldo[Saldo service boundary]
+        Orchestrator[Orchestrator API / TypeScript<br/>canonical workflow state]
+        StellarSvc[Stellar settlement service / TypeScript<br/>construct, submit, confirm, index]
+        Core[Java Core Backend<br/>partners, billers, compliance]
+        Ops[Operations and compliance<br/>alerts, cases, reconciliation]
+    end
 
-    android --> orchestrator
-    ios --> orchestrator
-    web --> orchestrator
-    web --> cctp
-    cctp --> orchestrator
-    web --> defindex
-    defindex --> orchestrator
-    orchestrator --> stellar
-    orchestrator --> core
-    stellar --> network
-    network --> stellar
-    core --> rails
-    rails --> core
-    stellar --> orchestrator
-    core --> orchestrator
+    Crossmint[Crossmint<br/>wallet identity, signer, recovery]
+    Stellar[Stellar network<br/>USDC]
+    Alfred[AlfredPay<br/>sandbox; production pending]
+    MoneyGram[MoneyGram Ramps<br/>authorization pending confirmation]
+    Rails[Billers and banks]
+    Screening[Screening providers]
+
+    Android <-->|authenticate, provision, approve, recover| Crossmint
+    iOS <-->|authenticate, provision, approve, recover| Crossmint
+    Android -->|commands and queries| Orchestrator
+    iOS -->|commands and queries| Orchestrator
+    Orchestrator -->|payment command| StellarSvc
+    Orchestrator -->|settlement command| Core
+    StellarSvc <-->|signing request / signed envelope| Crossmint
+    StellarSvc <-->|submit, query, stream| Stellar
+    Core <--> Alfred
+    Core <--> MoneyGram
+    Core <--> Rails
+    Core <--> Screening
+    StellarSvc -->|normalized event| Orchestrator
+    Core -->|normalized event| Orchestrator
+    Orchestrator --> Ops

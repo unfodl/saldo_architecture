@@ -1,70 +1,104 @@
 # Technical Architecture
 
-Saldo's Stellar integration is built around a ledger-first orchestration model. Three client applications, Android, iOS, and Web, call a TypeScript Orchestrator API. The Orchestrator owns user-facing workflow state, records every transaction, and coordinates the services that interact with Stellar and external settlement rails.
+## Design Principle
 
-The architecture separates product orchestration from rail-specific execution. Stellar activity is handled by a dedicated TypeScript Stellar settlement service. Biller, bank, alfredpay, MoneyGram, and compliance integrations are handled by the Java Core Backend.
+Saldo uses a ledger-first orchestration model. Native mobile clients initiate user actions; the Orchestrator creates the Saldo payment ID and owns workflow state; specialized services execute Stellar and offchain work. A provider callback never becomes canonical merely because it arrived last.
+
+All capability descriptions below are target architecture unless explicitly labeled existing or verified.
 
 ```mermaid
-flowchart TD
-    android[Android app]
-    ios[iOS app]
-    web[Web app]
+flowchart LR
+    subgraph Client[Native mobile boundary]
+        Android[Android / Kotlin]
+        iOS[iOS / Swift]
+    end
 
-    orchestrator[Orchestrator API<br/>TypeScript<br/>workflow ledger]
-    stellar[Stellar settlement service<br/>TypeScript<br/>transaction submission and monitoring]
-    core[Core backend<br/>Java<br/>billers, banks, compliance]
-    rails[Settlement rails<br/>alfredpay, MoneyGram, billers, banks]
-    cctp[Circle CCTP<br/>web-only cross-chain USDC receive]
-    defindex[DeFindex<br/>staging/testnet web app only]
-    network[Stellar network<br/>USDC]
+    subgraph Saldo[Saldo service boundary]
+        Orchestrator[Orchestrator API / TypeScript<br/>canonical workflow state]
+        StellarSvc[Stellar settlement service / TypeScript<br/>construct, submit, confirm, index]
+        Core[Java Core Backend<br/>partners, billers, compliance]
+        Ops[Operations and compliance<br/>alerts, cases, reconciliation]
+    end
 
-    android --> orchestrator
-    ios --> orchestrator
-    web --> orchestrator
-    web --> cctp
-    cctp --> orchestrator
-    web --> defindex
-    defindex --> orchestrator
-    orchestrator --> stellar
-    orchestrator --> core
-    stellar --> network
-    network --> stellar
-    core --> rails
-    rails --> core
-    stellar --> orchestrator
-    core --> orchestrator
+    Crossmint[Crossmint<br/>wallet identity, signer, recovery]
+    Stellar[Stellar network<br/>USDC]
+    Alfred[AlfredPay<br/>sandbox; production pending]
+    MoneyGram[MoneyGram Ramps<br/>authorization pending confirmation]
+    Rails[Billers and banks]
+    Screening[Screening providers]
+
+    Android <-->|authenticate, provision, approve, recover| Crossmint
+    iOS <-->|authenticate, provision, approve, recover| Crossmint
+    Android -->|commands and queries| Orchestrator
+    iOS -->|commands and queries| Orchestrator
+    Orchestrator -->|payment command| StellarSvc
+    Orchestrator -->|settlement command| Core
+    StellarSvc <-->|signing request / signed envelope| Crossmint
+    StellarSvc <-->|submit, query, stream| Stellar
+    Core <--> Alfred
+    Core <--> MoneyGram
+    Core <--> Rails
+    Core <--> Screening
+    StellarSvc -->|normalized event| Orchestrator
+    Core -->|normalized event| Orchestrator
+    Orchestrator --> Ops
 ```
 
-## Client Layer
+## Existing Boundaries Preserved
 
-The mobile apps expose the consumer wallet and bill payment experience. Users can create a non-custodial wallet, view USDC balance, receive funds, send USDC, and pay supported Mexican billers from wallet balance. The mobile wallet is provisioned through an embedded MPC wallet provider, with SEP-30-style account recovery tested early on testnet before production rollout.
+- **Android and iOS:** existing native application boundaries; repository contents were not accessible during this review.
+- **Orchestrator API:** existing architectural boundary for workflow and transaction state; implementation location is pending confirmation.
+- **Stellar settlement service:** existing TypeScript service boundary; private repository access was unavailable.
+- **Java Core Backend:** existing integration boundary for billers, banks, settlement partners, and compliance; private repository access was unavailable.
 
-The web application supports operations and agent-facing workflows. For agent or operator signing in the browser, the web app can use Stellar Wallets Kit to connect Stellar-compatible wallets and route signatures through a standard Stellar wallet connection layer.
+SCF #46 extends these boundaries. It does not replace the existing payment platform or introduce a funded web-client architecture.
 
-The web application also supports a web-only cross-chain receive flow through Circle CCTP. This allows a connected web wallet to receive USDC from supported external chains into Stellar USDC. This flow is part of the production web app plan and does not change the embedded MPC wallet model used in the consumer mobile apps.
+## Trust And Authorization Boundaries
 
-The web application will also include a DeFindex integration in staging/testnet only. This lets Saldo test vault deposit, withdraw, balance, and reconciliation flows without adding DeFindex to the production launch scope.
+1. The mobile app authenticates the Saldo user and obtains a short-lived Saldo session.
+2. Crossmint authentication or a configured identity-provider JWT binds the user session to a Crossmint wallet identity.
+3. The Orchestrator maps an immutable Saldo user ID to the Crossmint wallet locator and Stellar address; email and phone are mutable attributes, not primary keys.
+4. The Stellar service constructs a transaction from server-validated amount, destination, asset allowlist, memo, fee, and time bounds.
+5. The configured Crossmint signer authorizes the transaction. The proposed design requires user-controlled signing for user-wallet debits.
+6. The Stellar service submits only an envelope whose fields match the approved payment record, then monitors final inclusion.
+7. The Java backend starts offchain settlement only after required compliance and onchain preconditions are met.
 
-## Orchestrator API
+The exact deployed Crossmint signer and recovery configuration is **Pending technical confirmation**. No custody conclusion is valid until the signer inventory and recovery authority are exported and tested. See [wallet security](wallet-security.md).
 
-The Orchestrator is the primary API for all apps. It acts as Saldo's transaction ledger and workflow coordinator. It stores the canonical state for wallet creation, bill payments, SPEI transfers, cash-in/cash-out requests, partner references, settlement status, and reconciliation data.
+## State Ownership
 
-The Orchestrator records both on-chain and off-chain references. A single Saldo transaction can include a Stellar transaction hash, CCTP transfer reference, alfredpay reference, SPEI reference, biller payment ID, MoneyGram reference, and compliance status. Wallet recovery events are tracked during the testnet SEP-30 recovery workstream. DeFindex staging/testnet vault activity is tracked separately from production ledger activity.
+| State | Authoritative owner | Evidence |
+| --- | --- | --- |
+| Saldo user/payment workflow | Orchestrator | Payment record and append-only transition log |
+| Wallet signer/recovery configuration | Crossmint plus onchain wallet state | Wallet/signer identifiers and configuration export |
+| Stellar submission and confirmation | Stellar settlement service | Envelope hash, transaction hash, ledger sequence, result code |
+| Onchain truth | Stellar network | Public ledger transaction and operations |
+| AlfredPay/SPEI execution | Java Core Backend | Quote, partner transaction ID, SPEI reference, status payload |
+| MoneyGram execution | Java Core Backend | Provider transaction ID, status, reference number, cash event |
+| Biller settlement | Java Core Backend | Biller reference and acknowledgement |
+| Compliance decision | Java Core Backend/compliance system | Decision ID, rule outcome, reviewer/case reference |
 
-## Stellar Settlement Service
+Only the Orchestrator may transition the user-visible aggregate payment state. Other services emit immutable, deduplicated facts.
 
-The Stellar settlement service isolates Stellar protocol work from the rest of the product. It creates Stellar accounts and USDC trustlines, supports testnet recovery validation, builds and submits transactions, monitors transaction status, and returns ledger results to the Orchestrator.
+## Failure Boundary
 
-This service is intentionally narrow. It does not decide product workflow outcomes; it submits and monitors Stellar operations and gives the Orchestrator the data needed for reconciliation.
+Onchain and offchain settlement are not atomic. The system therefore uses a saga with explicit compensating actions:
 
-## Java Core Backend
+- If signing or Stellar submission fails, do not initiate offchain settlement.
+- If Stellar succeeds but the offchain leg fails, move to `EXCEPTION_REVIEW`; retry only when the partner operation is provably idempotent.
+- If a refund is approved, create a separate linked refund payment ID; never rewrite the original transaction as if it did not occur.
+- If an offchain leg reports success without the expected onchain state, freeze automated progression and open an operations case.
 
-The Java Core Backend handles external financial integrations. It connects to billers, banks, compliance systems, alfredpay for USDC-to-MXN/SPEI flows, and MoneyGram or another approved cash rail provider for cash-in/cash-out.
+Detailed transitions and invariants are in [reconciliation](reconciliation.md).
 
-The Core Backend returns partner transaction IDs, settlement status, compliance outcomes, and failure reasons to the Orchestrator. This keeps operational integrations separate from Stellar-specific transaction infrastructure.
+## Data And Credential Boundaries
 
-## Reconciliation Model
+- Mobile clients receive public client configuration only; server API secrets never ship in an app bundle.
+- Crossmint, AlfredPay, MoneyGram, screening, and bank credentials are stored in a managed secrets service with environment separation, least privilege, rotation, and access audit.
+- Provider payloads are schema-validated and stored with sensitive fields redacted or tokenized.
+- Personally identifiable data is excluded from Stellar memos and public transaction metadata.
+- Logs correlate by Saldo payment ID and provider references, not raw identity attributes.
 
-Every money movement is anchored by a Saldo transaction ID in the Orchestrator. On-chain movement is linked by Stellar transaction hash. Off-chain movement is linked by partner references. This model gives support, compliance, and operations teams one place to inspect transaction state while preserving direct links to the underlying rails.
+## Deployment Gates
 
-The target outcome is a production system where each USDC-funded bill payment can be traced from client request, to Stellar transaction, to MXN/SPEI or biller settlement, to final user-visible status.
+Testnet/sandbox completion does not authorize mainnet. Production requires completed signer/recovery threat tests, Crossmint Stellar enablement, pinned USDC identifiers, partner onboarding/certification, compliance approval, runbooks, alert ownership, reconciliation dry runs, and rollback/incident exercises.

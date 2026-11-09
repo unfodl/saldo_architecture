@@ -1,26 +1,28 @@
 sequenceDiagram
     autonumber
-    participant Mobile as Mobile app
+    actor User
+    participant Mobile as Android or iOS app
     participant Orchestrator as Orchestrator API
-    participant UserStore as User/contact store
-    participant MPC as Embedded MPC wallet provider
-    participant Stellar as Stellar settlement service
+    participant Crossmint as Crossmint
+    participant StellarSvc as Stellar settlement service
+    participant Stellar as Stellar network
 
-    Mobile->>Orchestrator: Start signup with email or phone
-    Orchestrator->>UserStore: Check whether email or phone exists
-
-    alt Email or phone already exists
-        UserStore-->>Orchestrator: Existing user found
-        Orchestrator-->>Mobile: Start login or recovery flow
-    else New user
-        UserStore-->>Orchestrator: No existing user
-        Orchestrator->>UserStore: Create pending user file
-        Orchestrator->>MPC: Provision embedded non-custodial wallet
-        MPC-->>Orchestrator: Wallet address and provisioning status
-        Orchestrator->>Stellar: Create or verify account and USDC trustline
-        Stellar-->>Orchestrator: Stellar account and trustline status
-        Orchestrator->>UserStore: Mark user file active with wallet reference
-        Orchestrator-->>Mobile: Signup complete and wallet ready
+    User->>Mobile: Sign in or register
+    Mobile->>Orchestrator: Authenticate and request wallet
+    Orchestrator->>Orchestrator: Create/find immutable Saldo user ID
+    Mobile->>Crossmint: Authenticate with configured identity binding
+    Crossmint-->>Mobile: Crossmint user/wallet context
+    Mobile->>Crossmint: Create or retrieve Stellar wallet
+    Crossmint-->>Mobile: Wallet locator and Stellar address
+    Mobile->>Orchestrator: Register wallet locator and address
+    Orchestrator->>StellarSvc: Verify account and USDC readiness
+    StellarSvc->>Stellar: Query account and trustline
+    alt Activation or trustline action required
+        StellarSvc-->>Orchestrator: Return required transaction/action
+        Orchestrator-->>Mobile: Request user approval
+        Mobile->>Crossmint: Approve/sign activation action
+        Crossmint-->>StellarSvc: Signed transaction or completion evidence
+        StellarSvc->>Stellar: Submit and confirm
     end
-
-    Note over Orchestrator,MPC: Full signup is not considered complete until the user file exists and the embedded wallet has been created.
+    StellarSvc-->>Orchestrator: Account, asset, and ledger evidence
+    Orchestrator-->>Mobile: Wallet READY

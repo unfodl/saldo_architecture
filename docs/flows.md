@@ -1,126 +1,137 @@
 # Transaction Flows
 
+All flows are proposed SCF #46 behavior unless an evidence label says otherwise.
+
 ## Signup And Wallet Provisioning
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Mobile as Mobile app
+    actor User
+    participant Mobile as Android or iOS app
     participant Orchestrator as Orchestrator API
-    participant UserStore as User/contact store
-    participant MPC as Embedded MPC wallet provider
-    participant Stellar as Stellar settlement service
+    participant Crossmint as Crossmint
+    participant StellarSvc as Stellar settlement service
+    participant Stellar as Stellar network
 
-    Mobile->>Orchestrator: Start signup with email or phone
-    Orchestrator->>UserStore: Check whether email or phone exists
-
-    alt Email or phone already exists
-        UserStore-->>Orchestrator: Existing user found
-        Orchestrator-->>Mobile: Start login or recovery flow
-    else New user
-        UserStore-->>Orchestrator: No existing user
-        Orchestrator->>UserStore: Create pending user file
-        Orchestrator->>MPC: Provision embedded non-custodial wallet
-        MPC-->>Orchestrator: Wallet address and provisioning status
-        Orchestrator->>Stellar: Create or verify account and USDC trustline
-        Stellar-->>Orchestrator: Stellar account and trustline status
-        Orchestrator->>UserStore: Mark user file active with wallet reference
-        Orchestrator-->>Mobile: Signup complete and wallet ready
+    User->>Mobile: Sign in or register
+    Mobile->>Orchestrator: Authenticate and request wallet
+    Orchestrator->>Orchestrator: Create/find immutable Saldo user ID
+    Mobile->>Crossmint: Authenticate with configured identity binding
+    Crossmint-->>Mobile: Crossmint user/wallet context
+    Mobile->>Crossmint: Create or retrieve Stellar wallet
+    Crossmint-->>Mobile: Wallet locator and Stellar address
+    Mobile->>Orchestrator: Register wallet locator and address
+    Orchestrator->>StellarSvc: Verify account and USDC readiness
+    StellarSvc->>Stellar: Query account and trustline
+    alt Activation or trustline action required
+        StellarSvc-->>Orchestrator: Return required transaction/action
+        Orchestrator-->>Mobile: Request user approval
+        Mobile->>Crossmint: Approve/sign activation action
+        Crossmint-->>StellarSvc: Signed transaction or completion evidence
+        StellarSvc->>Stellar: Submit and confirm
     end
-
-    Note over Orchestrator,MPC: Full signup is not complete until the user file exists and the embedded wallet has been created.
+    StellarSvc-->>Orchestrator: Account, asset, and ledger evidence
+    Orchestrator-->>Mobile: Wallet READY
 ```
 
-The mobile app never treats signup as complete by itself. Signup completes only after the Orchestrator has created the user file, provisioned the embedded wallet, and stored the wallet reference.
+The app must not display `READY` until identity mapping, account activation, network, and USDC asset checks pass. The party funding base reserve or sponsoring account/trustline entries is **Pending technical confirmation**.
 
-## Wallet Provisioning
+## Send Or Receive USDC
 
-1. User starts onboarding in the mobile app.
-2. App calls the Orchestrator.
-3. Orchestrator creates the user wallet record.
-4. Embedded MPC wallet provider provisions the non-custodial wallet.
-5. Stellar settlement service creates or verifies the Stellar account and USDC trustline.
-6. Orchestrator stores the wallet address and setup status.
-7. App shows wallet as ready.
+### Send
 
-## Testnet Wallet Recovery
+1. Mobile submits destination, amount, and idempotency key.
+2. Orchestrator validates session, wallet ownership, KYC/AML eligibility, limits, asset/network, and destination; it creates the Saldo payment ID.
+3. Stellar service builds a time-bounded transaction and returns an approval summary.
+4. Mobile displays source, destination, exact USDC amount, fee, network, and expiry.
+5. Crossmint applies the configured signer authorization.
+6. Stellar service compares the signed envelope with the approved payment record, submits it, and confirms ledger inclusion.
+7. Orchestrator moves the payment to `COMPLETED` only after the confirmed event is indexed.
 
-1. User starts recovery from a new device in the mobile app.
-2. App calls the Orchestrator to begin the recovery workflow.
-3. Orchestrator creates a recovery event linked to the user's wallet record.
-4. The recovery flow validates SEP-30-style recovery assumptions on testnet.
-5. Stellar settlement service verifies recovered wallet access and testnet account state.
-6. Orchestrator stores the recovery outcome, device context, and testnet validation status.
-7. App shows the recovered wallet as ready only after recovery validation succeeds.
+### Receive
 
-This flow is implemented and tested early on testnet before production wallet rollout.
+The app displays the confirmed Stellar address and network plus an explicit USDC asset warning. The indexer records eligible incoming USDC operations and associates them with a pilot user. Unsolicited or unsupported assets are shown separately and never counted as SCF USDC volume.
+
+## New-Device Recovery
+
+1. User authenticates on a new device.
+2. App retrieves the existing wallet identity; it must not silently create a second wallet.
+3. Crossmint indicates that no usable device signer is present.
+4. User proves control of the configured recovery method.
+5. Crossmint authorizes enrollment of the new device signer and, if policy requires, removal of the lost signer.
+6. Orchestrator records a recovery event without storing OTPs, secrets, or recovery tokens.
+7. A cooling period or enhanced verification applies to high-risk recovery followed by transfer.
+8. A small test transaction proves authorization before normal limits are restored.
+
+This uses Crossmint recovery infrastructure, not SEP-30. Whether the exact Stellar mobile configuration supports this sequence and which actors can invoke each step is **Pending technical confirmation**.
 
 ## USDC-Funded Bill Payment
 
-![Example mobile wallet and bill pay flow](../diagrams/example-mobile-flow.png)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Mobile
+    participant Orchestrator
+    participant StellarSvc as Stellar service
+    participant Crossmint
+    participant Core as Java Core Backend
+    participant Alfred as AlfredPay
+    participant Biller
 
-The example mobile flow shows the user moving from login/recovery into the wallet home screen, then into the Mexico services screen where supported bill pay companies are listed.
+    User->>Mobile: Select biller and confirm MXN amount
+    Mobile->>Orchestrator: Create payment with idempotency key
+    Orchestrator->>Core: Validate bill and request settlement quote
+    Core->>Alfred: Request USDC/MXN quote and fees
+    Alfred-->>Core: Quote ID, rate, fee, expiry
+    Core-->>Orchestrator: Validated quote and biller data
+    Orchestrator-->>Mobile: Approval summary
+    Orchestrator->>StellarSvc: Construct quoted USDC payment
+    StellarSvc-->>Mobile: Transaction approval request
+    Mobile->>Crossmint: User authorizes signature
+    Crossmint-->>StellarSvc: Signed envelope
+    StellarSvc->>StellarSvc: Verify envelope matches payment
+    StellarSvc-->>Orchestrator: Confirmed hash and ledger
+    Orchestrator->>Core: Execute settlement for payment ID
+    Core->>Alfred: Convert and initiate SPEI if required
+    Alfred-->>Core: Partner and SPEI status
+    Core->>Biller: Execute/confirm bill payment
+    Biller-->>Core: Biller reference or failure
+    Core-->>Orchestrator: Normalized settlement event
+    Orchestrator-->>Mobile: Completed, pending, or exception
+```
 
-1. User selects a biller and confirms payment from USDC balance.
-2. App sends payment request to the Orchestrator.
-3. Orchestrator creates a Saldo payment record.
-4. Stellar settlement service submits the required Stellar transaction and returns the transaction hash.
-5. Orchestrator calls the Java Core Backend to settle the bill payment.
-6. Core Backend routes settlement through biller, bank, or alfredpay rails.
-7. Core Backend returns partner references and final or pending settlement status.
-8. Orchestrator updates the ledger and app-visible transaction history.
+If the quote expires before signing, the transaction is not submitted; a new quote and user approval are required. If the onchain leg confirms and an offchain leg fails, the payment moves to exception handling rather than automatic blind retry.
 
-## SPEI / MXN Settlement With alfredpay
+## AlfredPay Failure And Refund
 
-1. User or workflow requests MXN settlement or SPEI transfer.
-2. Orchestrator records the request and validates transaction state.
-3. Stellar settlement service confirms the related USDC movement.
-4. Java Core Backend calls alfredpay for USDC-to-MXN settlement or SPEI transfer.
-5. alfredpay returns quote, transaction reference, and status.
-6. Core Backend reports status to the Orchestrator.
-7. Orchestrator stores the alfredpay reference and updates the transaction ledger.
+1. Java backend verifies callback authentication or obtains status by authenticated polling.
+2. It deduplicates the provider event and links it to the Saldo payment ID and AlfredPay transaction ID.
+3. A retryable pending state uses bounded backoff until the provider SLA expires.
+4. A terminal failure after confirmed Stellar debit opens `EXCEPTION_REVIEW`.
+5. Operations determine whether to retry the same idempotent partner operation, pay through an approved recovery path, or refund.
+6. A refund uses a new payment ID linked by `refund_of_payment_id`, requires authorization and screening, and records its own Stellar hash.
 
-## Cash-In / Cash-Out
+## MoneyGram Cash-In/Cash-Out
 
-1. User starts a MoneyGram cash-in or cash-out flow.
-2. App calls the Orchestrator.
-3. Orchestrator creates the cash transaction record.
-4. Wallet authenticates with the MoneyGram Stellar anchor using SEP-10.
-5. Java Core Backend starts the SEP-24 interactive deposit or withdrawal flow.
-6. User completes the MoneyGram webview/browser flow.
-7. Stellar settlement service handles the required USDC movement and memo handling.
-8. Core Backend polls transaction status and returns the MoneyGram reference and status.
-9. Orchestrator reconciles Stellar and cash rail state.
+MoneyGram currently documents both a widget/API flow for new Stellar pilots and a legacy SEP-10/SEP-24 anchor flow. Saldo must select and certify one path; it must not mix protocol steps from both in an implementation claim.
 
-## Agent Web Signing
+### Common Flow
 
-1. Agent opens the web interface.
-2. Web app uses Stellar Wallets Kit to connect a Stellar-compatible wallet.
-3. Agent reviews an operation requiring signature.
-4. Web app requests signature through Stellar Wallets Kit.
-5. Signed payload is submitted to the Orchestrator.
-6. Orchestrator routes Stellar operations to the Stellar settlement service and operational updates to the Java Core Backend.
+1. Mobile asks the Orchestrator to create a cash transaction.
+2. Java backend creates the MoneyGram session or anchor transaction and stores the provider ID before opening the interactive URL.
+3. Mobile opens only an allowlisted HTTPS MoneyGram origin in an in-app browser/webview and validates the return link.
+4. User completes provider KYC and cash instructions.
+5. For cash-out, the app requests user authorization for the exact Stellar USDC transfer, destination, and required memo; for cash-in, the indexer waits for the inbound USDC transaction.
+6. Java backend consumes authenticated callback data if available and polls authoritative status as a fallback.
+7. Orchestrator reconciles provider ID, MoneyGram reference, transaction hash, amount, wallet, and terminal status.
 
-## Web Wallet Cross-Chain USDC Receive With Circle CCTP
+For the legacy path, SEP-10 authentication precedes SEP-24 deposit/withdraw and the SEP-24 transaction ID is polled. For the current widget/API path, a server-created short-lived session and sign callback are used; the widget handles anchor interaction. Exact credentials, supported corridors, callbacks, certification, and production authorization are **Pending technical confirmation**.
 
-1. User opens the web wallet interface.
-2. Web app connects a Stellar-compatible wallet through Stellar Wallets Kit.
-3. User selects an inbound USDC transfer from a supported external chain.
-4. Web app starts the Circle CCTP flow and captures the transfer reference.
-5. Orchestrator creates an internal deposit record for the inbound web wallet funding flow.
-6. Stellar settlement service monitors the resulting Stellar USDC receipt.
-7. Orchestrator links the CCTP reference, Stellar transaction hash, wallet address, and final deposit status.
+## Disputes And Inconsistent State
 
-This flow is limited to the web wallet interface. Consumer mobile wallets continue to use the embedded MPC wallet provider and do not expose CCTP receive in the initial architecture.
-
-## Web App DeFindex Vault Testing
-
-1. User opens the staging web app.
-2. Web app connects a Stellar-compatible testnet wallet through Stellar Wallets Kit.
-3. User selects a testnet DeFindex vault action such as deposit, withdraw, or balance lookup.
-4. Web app requests the required transaction or vault data through the DeFindex integration.
-5. User signs the testnet operation from the browser wallet.
-6. Orchestrator records the staging/testnet vault reference and related Stellar testnet transaction hash.
-7. Staging dashboard displays the testnet vault activity for product and reconciliation testing.
-
-This flow is staging/testnet only. It is not part of the production launch scope and is not exposed in the consumer mobile apps.
+- The original ledger evidence is immutable.
+- Support opens a case linked to the payment ID and records user claim, provider evidence, and decision.
+- Automated execution stops for impossible state combinations, amount mismatch, unknown destination, duplicate external reference, or success reversal.
+- Resolution is an explicit transition such as `RESOLVED_NO_ACTION`, `REFUND_PENDING`, `REFUNDED`, or `LOSS_RECORDED`, never an edit that hides the original event.
