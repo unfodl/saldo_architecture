@@ -7,7 +7,7 @@ Verified on November 9, 2026 using public GitHub access and the checked-out arch
 | Repository | Observed visibility/access | SCF #46 role |
 | --- | --- | --- |
 | [unfodl/saldo_architecture](https://github.com/unfodl/saldo_architecture) | Public; fetched successfully | Public architecture, security, reconciliation, roadmap, and acceptance evidence |
-| [unfodl/saldo_web](https://github.com/unfodl/saldo_web) | Public; page and source inventory visible | Historical web prototype; explicitly excluded from funded scope and metrics |
+| [unfodl/saldo_web](https://github.com/unfodl/saldo_web) | Public | Repository map for all Saldo repositories. The historical web prototype, explicitly excluded from funded scope and metrics, is archived at tag [`web-prototype-2026-08`](https://github.com/unfodl/saldo_web/tree/web-prototype-2026-08) |
 | [unfodl/saldo](https://github.com/unfodl/saldo) | Access-restricted from anonymous/current credentials | Reported Java Core Backend for billers, banks, partners, and compliance |
 | [unfodl/saldowallet_android](https://github.com/unfodl/saldowallet_android) | Access-restricted from anonymous/current credentials | Reported native Android/Kotlin application |
 | [unfodl/saldo-stellar](https://github.com/unfodl/saldo-stellar) | Access-restricted from anonymous/current credentials | Reported TypeScript Stellar settlement service |
@@ -25,7 +25,7 @@ The fetched `saldo_architecture` history contains real commits including:
 - `898f214` — “Add repository map” (author recorded as `marco`, 2026-08-18).
 - `f612e1f` — “Update README.md” (author recorded as `Marco`, 2026-08-16).
 
-This proves activity in the public architecture repository by those Git author identities. It does not independently prove that the author is Marco M., prove work in private repositories, or establish contribution percentages. The public `saldo_web` repository is visible and describes a Crossmint/Stellar prototype, but its implementation is historical evidence outside SCF #46.
+This proves activity in the public architecture repository by those Git author identities. It does not independently prove that the author is Marco M., prove work in private repositories, or establish contribution percentages. The public `saldo_web` repository now serves as the Saldo repository map; its earlier Crossmint/Stellar prototype is preserved at tag `web-prototype-2026-08` as historical evidence outside SCF #46.
 
 ## Assigned Responsibility Matrix
 
